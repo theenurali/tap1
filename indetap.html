@@ -1,0 +1,885 @@
+<title>Tap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Rubik:wght@400;500;600&display=swap">
+<style>
+/* Layout: app bar (logo · language · client/salon); client = one phone-width column; salon cabinet = wider column with tabs */
+:root{
+  --paper:#F3F6F7; --card:#FFFFFF; --ink:#14202B; --muted:#5A6772; --line:#DCE3E7;
+  --accent:#0A7F96; --accent-ink:#FFFFFF; --accent-soft:#DCEFF3;
+  --gold:#C98A00; --gold-soft:#FBF0D4; --danger:#BF3A2B; --ok:#1C8752;
+  --wa:#DCF5D0; --wa-ink:#173D22; --shade:rgba(20,32,43,.08);
+  --display:'Unbounded','Arial Black',system-ui,sans-serif;
+  --body:'Rubik',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E151B; --card:#162029; --ink:#E5ECF0; --muted:#98A6B0; --line:#273541;
+  --accent:#3DC1D9; --accent-ink:#03222A; --accent-soft:#11323C;
+  --gold:#F2B935; --gold-soft:#3A2E10; --danger:#F07366; --ok:#4CC98A;
+  --wa:#1E3A27; --wa-ink:#D7F2DC; --shade:rgba(0,0,0,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0E151B; --card:#162029; --ink:#E5ECF0; --muted:#98A6B0; --line:#273541;
+  --accent:#3DC1D9; --accent-ink:#03222A; --accent-soft:#11323C;
+  --gold:#F2B935; --gold-soft:#3A2E10; --danger:#F07366; --ok:#4CC98A;
+  --wa:#1E3A27; --wa-ink:#D7F2DC; --shade:rgba(0,0,0,.4); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 56px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.narrow{max-width:560px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.logo i{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:8px -6px 0 -3px var(--gold)}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--danger);color:#fff;font-size:11px;margin-left:5px}
+
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:9px 14px;font-weight:500}
+.tabs button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+h2{font-family:var(--display);font-weight:500;font-size:20px;line-height:1.25;margin:0;text-wrap:balance}
+h3{margin:0;font-size:18px}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+
+.loc{display:flex;flex-direction:column;gap:10px}
+.loc .where{display:flex;gap:10px;align-items:center}
+.pin{flex:none;width:36px;height:36px;border-radius:12px;background:var(--accent-soft);display:grid;place-items:center}
+.pin svg{width:18px;height:18px;fill:var(--accent)}
+select,input[type=text],input[type=tel],input[type=number],textarea{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%}
+textarea{min-height:80px;resize:vertical}
+.search{position:relative}
+.search input{padding-left:40px;font-size:16px;height:48px}
+.search svg{position:absolute;left:13px;top:14px;width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.chips button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-weight:500}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+.list{display:flex;flex-direction:column;gap:10px}
+.salon{display:grid;grid-template-columns:56px 1fr;gap:12px;text-align:left;width:100%;border:1px solid var(--line);background:var(--card);border-radius:18px;padding:14px}
+.salon:hover{border-color:var(--accent)}
+.ava{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:20px;color:var(--ink)}
+.salon .nm{font-weight:600;font-size:17px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:14px;color:var(--muted)}
+.star{color:var(--gold);font-weight:600}
+.dist{color:var(--ink);font-weight:600}
+.open{color:var(--ok)} .closed{color:var(--danger)}
+
+.btn{border:0;background:var(--accent);color:var(--accent-ink);font-weight:600;border-radius:14px;padding:13px 16px;width:100%;font-size:16px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn2{border:1px solid var(--line);background:var(--card);font-weight:600;border-radius:14px;padding:12px 16px;width:100%}
+.mini{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px 12px;font-size:14px;font-weight:500}
+.mini.acc{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.mini.danger{color:var(--danger);border-color:var(--danger)}
+.back{border:0;background:none;color:var(--accent);font-weight:600;padding:0;align-self:flex-start}
+
+.svc{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.svc:first-of-type{border-top:0}
+.svc .p{font-weight:600;white-space:nowrap}
+.pick{display:flex;flex-direction:column;gap:8px}
+.pick button{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;width:100%;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px 14px}
+.pick button:hover{border-color:var(--accent)}
+.pick button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.mav{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-weight:600}
+.days{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.days button{flex:none;width:54px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:6px 0;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.days small{font-size:11px;color:var(--muted)}
+.days b{font-size:17px}
+.days button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.days button[aria-pressed="true"] small{color:var(--accent-ink)}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px}
+.slots button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 0;font-variant-numeric:tabular-nums;font-weight:500}
+.slots button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.empty{color:var(--muted);font-size:14px;padding:14px;border:1px dashed var(--line);border-radius:12px;text-align:center}
+.sum{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:15px;background:var(--paper);border-radius:14px;padding:12px 14px;margin:0}
+.sum dt{color:var(--muted)} .sum dd{margin:0;text-align:right;font-weight:600}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:14px;color:var(--muted)}
+.check{display:flex;gap:10px;align-items:center;font-size:15px}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+.err{color:var(--danger);font-size:14px;margin:0}
+.ok{width:56px;height:56px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:28px;font-weight:700}
+.wa{background:var(--wa);color:var(--wa-ink);border-radius:4px 16px 16px 16px;padding:12px 14px;font-size:15px}
+.wa small{display:block;opacity:.75;font-size:12px;margin-bottom:4px}
+
+.rev{display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--line)}
+.rev:first-of-type{border-top:0}
+.stars{color:var(--gold);letter-spacing:1px}
+.ver{font-size:12px;color:var(--ok);font-weight:500}
+.reply{background:var(--paper);border-radius:12px;padding:10px 12px;font-size:14px}
+.reply b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:2px}
+.rate{display:flex;gap:6px}
+.rate button{border:1px solid var(--line);background:var(--card);border-radius:10px;width:44px;height:44px;font-size:20px;color:var(--muted)}
+.rate button[aria-pressed="true"]{color:var(--gold);border-color:var(--gold);background:var(--gold-soft)}
+.pill{display:inline-block;font-size:12px;padding:3px 9px;border-radius:999px;background:var(--paper);color:var(--muted);font-weight:500}
+.pill.ok{background:var(--accent-soft);color:var(--accent)}
+.pill.new{background:var(--accent);color:var(--accent-ink)}
+.bk{display:grid;grid-template-columns:62px 1fr;gap:12px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--card)}
+.bk.new{border-color:var(--accent);box-shadow:inset 4px 0 0 var(--accent)}
+.bk .t{font-weight:600;font-variant-numeric:tabular-nums}
+.bk .t small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.bk .info{display:flex;flex-direction:column;gap:3px;min-width:0}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.stat small{display:block;color:var(--muted);font-size:13px}
+.stat b{font-family:var(--display);font-weight:500;font-size:20px;font-variant-numeric:tabular-nums}
+.chart{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:180px;padding-top:18px}
+.col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;min-width:0}
+.col .v{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.col .b{width:100%;max-width:40px;background:var(--accent);border-radius:6px 6px 2px 2px;min-height:2px}
+.col.today .b{background:var(--gold)}
+.col .d{font-size:12px;color:var(--muted)}
+.hbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;font-size:14px}
+.hbar .track{grid-column:1/-1;height:8px;background:var(--paper);border-radius:4px;overflow:hidden}
+.hbar .fill{height:100%;background:var(--accent);border-radius:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.formrow{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end}
+.tbl{width:100%;border-collapse:collapse;font-size:15px}
+.tbl td{padding:10px 6px;border-top:1px solid var(--line)}
+.tbl td.r{text-align:right;white-space:nowrap}
+.tblwrap{overflow-x:auto}
+.note{font-size:13px;color:var(--muted);text-align:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:11px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px);box-shadow:0 10px 30px var(--shade);z-index:20}
+
+@media (max-width:720px){
+  .stats{grid-template-columns:1fr 1fr}
+  .grid2{grid-template-columns:1fr}
+  .formrow{grid-template-columns:1fr 1fr}
+  .formrow .wide{grid-column:1/-1}
+}
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="logo"><i></i>tap</div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Язык / Тіл">
+        <button id="lang-kz" data-a="lang" data-v="kz">ҚАЗ</button>
+        <button id="lang-ru" data-a="lang" data-v="ru">РУС</button>
+      </div>
+      <div class="seg" role="group" aria-label="Режим">
+        <button id="mode-client" data-a="mode" data-v="client"></button>
+        <button id="mode-salon" data-a="mode" data-v="salon"></button>
+      </div>
+    </div>
+  </header>
+  <main id="app"></main>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ===================== texts ===================== */
+const L = {
+ru:{
+  client:'Клиент', salon:'Салон', home:'Главная', my:'Мои записи',
+  you:'Вы здесь', detect:'Определить моё местоположение', detecting:'Определяем…',
+  gps:'по геолокации', locFail:'Не удалось определить местоположение. Выберите район вручную.',
+  far:'Вы далеко от Шымкента, поэтому считаем расстояние от центра города.',
+  searchPh:'Салон или услуга', all:'Все', nearby:'Салоны рядом', nothing:'Ничего не нашли. Попробуйте другую категорию или слово.',
+  back:'Назад', services:'Услуги', masters:'Мастера', reviews:'Отзывы', book:'Записаться',
+  min:'мин', any:'Любой свободный мастер', anySub:'Покажем всё свободное время',
+  s1:'Выберите услугу', s2:'Выберите мастера', s3:'Выберите день и время', s4:'Ваши данные',
+  step:'Шаг {n} из 4', noReg:'Регистрация не нужна: только имя и телефон.',
+  name:'Имя', phone:'Телефон', waOpt:'Напомнить в WhatsApp за 2 часа до визита',
+  confirm:'Записаться', next:'Дальше', noSlots:'На этот день свободного времени нет',
+  done:'Вы записаны!', doneText:'{date}, {time}. {salon} ждёт вас.',
+  waPrev:'Так будет выглядеть напоминание в WhatsApp',
+  waMsg:'Здравствуйте, {name}! Напоминаем: сегодня в {time} вы записаны в {salon} ({service}, мастер {master}). Ответьте 1, чтобы подтвердить, или 2, чтобы отменить.',
+  toHome:'На главную', upcoming:'Предстоящие', past:'Прошедшие',
+  move:'Перенести', cancel:'Отменить', cancelQ:'Отменить эту запись?', yes:'Да, отменить', no:'Нет',
+  cancelled:'Запись отменена', leave:'Оставить отзыв', reviewed:'Вы оставили отзыв',
+  send:'Отправить', verified:'Был(а) в салоне', reply:'Ответ салона', noMy:'У вас пока нет записей',
+  onlyAfter:'Отзыв можно оставить только после визита. Поэтому все отзывы на сайте честные.',
+  thanks:'Спасибо за отзыв!', newTime:'Выберите новое время', moved:'Запись перенесена', saveMove:'Перенести на это время',
+  today:'Сегодня', tomorrow:'Завтра', master:'Мастер', when:'Когда', price:'Цена', service:'Услуга',
+  errName:'Напишите имя, чтобы салон знал, кого ждать.', errPhone:'Проверьте номер: нужно не меньше 10 цифр.',
+  errTaken:'Это время уже заняли. Выберите другое.', errStars:'Поставьте оценку от 1 до 5.',
+  revPh:'Что понравилось или не понравилось?', remindSent:'напоминание отправлено', remindAt:'напомним в {t}', noRemind:'без напоминания',
+  demo:'Демо-версия: салоны, мастера и отзывы вымышленные.',
+  cab:'Кабинет салона', tBook:'Записи', tRev:'Отзывы', tSvc:'Услуги и мастера', tStat:'Статистика',
+  allM:'Все мастера', free:'Свободно', newB:'новая запись', client2:'Клиент',
+  replyPh:'Напишите ответ клиенту', replyBtn:'Ответить', replied:'Ответ опубликован', waitReply:'ждёт ответа',
+  addSvc:'Добавить услугу', svcName:'Название услуги', dur:'Минут', priceT:'Цена, ₸', add:'Добавить', del:'Удалить',
+  addM:'Добавить мастера', mName:'Имя мастера', spec:'Специализация', hours:'Часы работы', openT:'Открытие', closeT:'Закрытие', save:'Сохранить', saved:'Сохранено',
+  added:'Добавлено', week:'За последние 7 дней', sB:'Записей', sR:'Выручка', sA:'Средний чек', sC:'Отмен',
+  byDay:'Выручка по дням', top:'Популярные услуги', byM:'Мастера', noBook:'На этот день записей нет',
+  dayFree:'Весь день свободен', svcErr:'Заполните название и цену.', mErr:'Напишите имя мастера.',
+  times:'раз', newNote:'Новые записи от клиентов появляются здесь сразу.',
+},
+kz:{
+  client:'Клиент', salon:'Салон', home:'Басты бет', my:'Менің жазылуларым',
+  you:'Сіз осындасыз', detect:'Орнымды анықтау', detecting:'Анықтап жатырмыз…',
+  gps:'геолокация бойынша', locFail:'Орныңызды анықтау мүмкін болмады. Ауданды өзіңіз таңдаңыз.',
+  far:'Сіз Шымкенттен алыстасыз, сондықтан қашықтықты қала орталығынан есептейміз.',
+  searchPh:'Салон немесе қызмет', all:'Барлығы', nearby:'Жақын маңдағы салондар', nothing:'Ештеңе табылмады. Басқа санатты немесе сөзді таңдап көріңіз.',
+  back:'Артқа', services:'Қызметтер', masters:'Шеберлер', reviews:'Пікірлер', book:'Жазылу',
+  min:'мин', any:'Кез келген бос шебер', anySub:'Барлық бос уақытты көрсетеміз',
+  s1:'Қызметті таңдаңыз', s2:'Шеберді таңдаңыз', s3:'Күн мен уақытты таңдаңыз', s4:'Сіздің деректеріңіз',
+  step:'{n}-қадам, барлығы 4', noReg:'Тіркелу қажет емес: тек атыңыз бен телефоныңыз.',
+  name:'Атыңыз', phone:'Телефон', waOpt:'Келерден 2 сағат бұрын WhatsApp-та еске салу',
+  confirm:'Жазылу', next:'Әрі қарай', noSlots:'Бұл күнге бос уақыт жоқ',
+  done:'Сіз жазылдыңыз!', doneText:'{date}, сағат {time}. {salon} сізді күтеді.',
+  waPrev:'WhatsApp-тағы еске салу осындай болады',
+  waMsg:'Сәлеметсіз бе, {name}! Еске саламыз: бүгін сағат {time} {salon} салонына жазылғансыз ({service}, шебер: {master}). Растау үшін 1, бас тарту үшін 2 деп жауап беріңіз.',
+  toHome:'Басты бетке', upcoming:'Алдағы', past:'Өткен',
+  move:'Ауыстыру', cancel:'Бас тарту', cancelQ:'Бұл жазылудан бас тартасыз ба?', yes:'Иә, бас тарту', no:'Жоқ',
+  cancelled:'Жазылудан бас тартылды', leave:'Пікір қалдыру', reviewed:'Сіз пікір қалдырдыңыз',
+  send:'Жіберу', verified:'Салонда болған', reply:'Салонның жауабы', noMy:'Әзірге жазылуларыңыз жоқ',
+  onlyAfter:'Пікірді тек салонға барғаннан кейін қалдыруға болады. Сондықтан сайттағы барлық пікір шынайы.',
+  thanks:'Пікіріңізге рахмет!', newTime:'Жаңа уақытты таңдаңыз', moved:'Жазылу ауыстырылды', saveMove:'Осы уақытқа ауыстыру',
+  today:'Бүгін', tomorrow:'Ертең', master:'Шебер', when:'Қашан', price:'Бағасы', service:'Қызмет',
+  errName:'Салон кімді күтетінін білуі үшін атыңызды жазыңыз.', errPhone:'Нөмірді тексеріңіз: кемінде 10 цифр болуы керек.',
+  errTaken:'Бұл уақыт бос емес. Басқасын таңдаңыз.', errStars:'1-ден 5-ке дейін баға қойыңыз.',
+  revPh:'Не ұнады, не ұнамады?', remindSent:'еске салу жіберілді', remindAt:'{t}-да еске саламыз', noRemind:'еске салусыз',
+  demo:'Демо нұсқа: салондар, шеберлер мен пікірлер ойдан құрастырылған.',
+  cab:'Салон кабинеті', tBook:'Жазылулар', tRev:'Пікірлер', tSvc:'Қызметтер мен шеберлер', tStat:'Статистика',
+  allM:'Барлық шебер', free:'Бос', newB:'жаңа жазылу', client2:'Клиент',
+  replyPh:'Клиентке жауап жазыңыз', replyBtn:'Жауап беру', replied:'Жауап жарияланды', waitReply:'жауап күтуде',
+  addSvc:'Қызмет қосу', svcName:'Қызмет атауы', dur:'Минут', priceT:'Бағасы, ₸', add:'Қосу', del:'Жою',
+  addM:'Шебер қосу', mName:'Шебердің аты', spec:'Мамандығы', hours:'Жұмыс уақыты', openT:'Ашылуы', closeT:'Жабылуы', save:'Сақтау', saved:'Сақталды',
+  added:'Қосылды', week:'Соңғы 7 күн', sB:'Жазылу', sR:'Түсім', sA:'Орташа чек', sC:'Бас тарту',
+  byDay:'Күндер бойынша түсім', top:'Танымал қызметтер', byM:'Шеберлер', noBook:'Бұл күнге жазылу жоқ',
+  dayFree:'Күні бойы бос', svcErr:'Атауы мен бағасын толтырыңыз.', mErr:'Шебердің атын жазыңыз.',
+  times:'рет', newNote:'Клиенттердің жаңа жазылулары осында бірден пайда болады.',
+}};
+const WD = {ru:['вс','пн','вт','ср','чт','пт','сб'], kz:['жс','дс','сс','ср','бс','жм','сб']};
+const MON = {ru:['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],
+             kz:['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан']};
+
+/* ===================== data (demo) ===================== */
+const CATS = [
+  {id:'nails', ru:'Маникюр', kz:'Маникюр'},
+  {id:'hair', ru:'Стрижки', kz:'Шаш қию'},
+  {id:'barber', ru:'Барбер', kz:'Барбер'},
+  {id:'brows', ru:'Брови и ресницы', kz:'Қас пен кірпік'},
+  {id:'massage', ru:'Массаж', kz:'Массаж'},
+  {id:'cosmo', ru:'Косметолог', kz:'Косметолог'},
+];
+const DISTRICTS = [
+  {id:'alf', ru:'Аль-Фарабийский район', kz:'Әл-Фараби ауданы', lat:42.317, lng:69.596},
+  {id:'abai', ru:'Абайский район', kz:'Абай ауданы', lat:42.333, lng:69.560},
+  {id:'enb', ru:'Енбекшинский район', kz:'Еңбекші ауданы', lat:42.300, lng:69.626},
+  {id:'kar', ru:'Каратауский район', kz:'Қаратау ауданы', lat:42.360, lng:69.620},
+  {id:'tur', ru:'Туранский район', kz:'Тұран ауданы', lat:42.288, lng:69.560},
+];
+const H = h => h*60;
+const SALONS = [
+ {id:'akzhol', name:'Nail Studio Ақжол', cats:['nails','brows'], color:'#F6D5C8', lat:42.318, lng:69.601, open:H(9), close:H(21), rating:4.9, count:128,
+  addr:{ru:'пр. Тауке хана, 45', kz:'Тәуке хан даңғылы, 45'},
+  masters:[{id:'a1',name:'Айгерим',ru:'маникюр, педикюр',kz:'маникюр, педикюр',skills:['n1','n2','n3']},
+           {id:'a2',name:'Дина',ru:'маникюр',kz:'маникюр',skills:['n1','n2']},
+           {id:'a3',name:'Сабина',ru:'брови и ресницы',kz:'қас пен кірпік',skills:['b1','b2']}],
+  services:[{id:'n1',ru:'Маникюр классический',kz:'Классикалық маникюр',dur:60,price:5000},
+            {id:'n2',ru:'Маникюр + гель-лак',kz:'Маникюр + гель-лак',dur:90,price:8000},
+            {id:'n3',ru:'Педикюр',kz:'Педикюр',dur:90,price:9000},
+            {id:'b1',ru:'Коррекция бровей',kz:'Қас түзету',dur:30,price:3000},
+            {id:'b2',ru:'Ламинирование ресниц',kz:'Кірпік ламинациясы',dur:60,price:7000}],
+  reviews:[{a:'Жанар',s:5,d:3,txt:'Айгерим — лучший мастер! Гель-лак держится уже третью неделю.',reply:'Рахмет, Жанар! Ждём вас снова.'},
+           {a:'Мөлдір',s:5,d:8,txt:'Өте ұнады, таза әрі жайлы. Уақытында қабылдады.'},
+           {a:'Ольга',s:4,d:15,txt:'Всё хорошо, но пришлось подождать минут десять.'}]},
+ {id:'dala', name:'Барбершоп Дала', cats:['barber'], color:'#CFE3EA', lat:42.323, lng:69.589, open:H(10), close:H(22), rating:4.8, count:214,
+  addr:{ru:'ул. Байтурсынова, 12', kz:'Байтұрсынов көшесі, 12'},
+  masters:[{id:'d1',name:'Ерлан',ru:'барбер',kz:'барбер',skills:['h1','h2','h3','h4']},
+           {id:'d2',name:'Данияр',ru:'барбер',kz:'барбер',skills:['h1','h2','h4']}],
+  services:[{id:'h1',ru:'Мужская стрижка',kz:'Ерлер шаш қиюы',dur:45,price:4000},
+            {id:'h2',ru:'Стрижка + борода',kz:'Шаш қию + сақал',dur:60,price:6000},
+            {id:'h3',ru:'Детская стрижка',kz:'Балалар шаш қиюы',dur:30,price:3000},
+            {id:'h4',ru:'Оформление бороды',kz:'Сақал түзету',dur:30,price:2500}],
+  reviews:[{a:'Нұрлан',s:5,d:2,txt:'Ерлан жақсы қиды, атмосфера керемет.',reply:'Рахмет! Тағы келіңіз.'},
+           {a:'Тимур',s:5,d:6,txt:'Записался онлайн за минуту, приняли вовремя.'},
+           {a:'Бауыржан',s:4,d:20,txt:'Нормально, но в выходные бывает очередь.'}]},
+ {id:'aiym', name:'Lash & Brow Айым', cats:['brows'], color:'#E7D9F0', lat:42.305, lng:69.614, open:H(10), close:H(20), rating:4.7, count:86,
+  addr:{ru:'мкр. Нурсат, 8', kz:'Нұрсат ш/а, 8'},
+  masters:[{id:'y1',name:'Айым',ru:'ресницы, брови',kz:'кірпік, қас',skills:['l1','l2','l3']},
+           {id:'y2',name:'Жанель',ru:'брови',kz:'қас',skills:['l2','l3']}],
+  services:[{id:'l1',ru:'Наращивание ресниц',kz:'Кірпік ұзарту',dur:120,price:12000},
+            {id:'l2',ru:'Ламинирование бровей',kz:'Қас ламинациясы',dur:60,price:6000},
+            {id:'l3',ru:'Окрашивание бровей',kz:'Қас бояу',dur:30,price:2500}],
+  reviews:[{a:'Динара',s:5,d:4,txt:'Ресницы как натуральные, очень аккуратно.'},
+           {a:'Әсем',s:4,d:12,txt:'Жақсы, бірақ сәл кешікті.',reply:'Кешіріңіз, Әсем! Келесі жолы уақытында қабылдаймыз.'}]},
+ {id:'nur', name:'Шаштараз Нұр', cats:['hair'], color:'#F3E3B5', lat:42.335, lng:69.566, open:H(9), close:H(20), rating:4.6, count:173,
+  addr:{ru:'ул. Жибек жолы, 30', kz:'Жібек жолы көшесі, 30'},
+  masters:[{id:'r1',name:'Гүлнар',ru:'стрижки, окрашивание',kz:'шаш қию, бояу',skills:['w1','w2','w3','w4']},
+           {id:'r2',name:'Әсел',ru:'укладки',kz:'шаш сәндеу',skills:['w1','w3','w4']}],
+  services:[{id:'w1',ru:'Женская стрижка',kz:'Әйелдер шаш қиюы',dur:60,price:5000},
+            {id:'w2',ru:'Окрашивание',kz:'Шаш бояу',dur:150,price:18000},
+            {id:'w3',ru:'Укладка',kz:'Шаш сәндеу',dur:45,price:4000},
+            {id:'w4',ru:'Мужская стрижка',kz:'Ерлер шаш қиюы',dur:30,price:3000}],
+  reviews:[{a:'Гаухар',s:5,d:5,txt:'Гүлнар апай шашымды керемет бояды!'},
+           {a:'Светлана',s:4,d:9,txt:'Хорошая стрижка, цены нормальные.'}]},
+ {id:'zhibek', name:'Spa Жібек', cats:['massage','cosmo'], color:'#CFE8D6', lat:42.355, lng:69.617, open:H(10), close:H(21), rating:4.9, count:64,
+  addr:{ru:'пр. Республики, 18', kz:'Республика даңғылы, 18'},
+  masters:[{id:'z1',name:'Арман',ru:'массаж',kz:'массаж',skills:['m1','m2']},
+           {id:'z2',name:'Мадина',ru:'косметолог',kz:'косметолог',skills:['c1']}],
+  services:[{id:'m1',ru:'Массаж спины',kz:'Арқа массажы',dur:40,price:7000},
+            {id:'m2',ru:'Общий массаж',kz:'Жалпы массаж',dur:60,price:12000},
+            {id:'c1',ru:'Чистка лица',kz:'Бет тазалау',dur:60,price:10000}],
+  reviews:[{a:'Ринат',s:5,d:7,txt:'Арман — профессионал, спина больше не болит.'},
+           {a:'Ақмарал',s:5,d:14,txt:'Тыныш, таза, қызмет өте жақсы.'}]},
+ {id:'aru', name:'Beauty House Ару', cats:['nails','hair'], color:'#F4CFD6', lat:42.296, lng:69.566, open:H(9), close:H(21), rating:4.5, count:97,
+  addr:{ru:'мкр. Самал-3, 15', kz:'Самал-3 ш/а, 15'},
+  masters:[{id:'u1',name:'Ару',ru:'маникюр',kz:'маникюр',skills:['u1','u2']},
+           {id:'u2',name:'Лаура',ru:'стрижки',kz:'шаш қию',skills:['u3','u4']}],
+  services:[{id:'u1',ru:'Маникюр + гель-лак',kz:'Маникюр + гель-лак',dur:90,price:7000},
+            {id:'u2',ru:'Снятие покрытия',kz:'Жабынды алу',dur:30,price:1500},
+            {id:'u3',ru:'Женская стрижка',kz:'Әйелдер шаш қиюы',dur:60,price:4500},
+            {id:'u4',ru:'Укладка',kz:'Шаш сәндеу',dur:45,price:3500}],
+  reviews:[{a:'Камила',s:5,d:3,txt:'Удобно, рядом с домом. Ару делает очень красиво.'},
+           {a:'Айдана',s:4,d:18,txt:'Жақсы салон, бағасы қолжетімді.'}]},
+ {id:'gent', name:'Gentlemen Barber', cats:['barber'], color:'#D7DCE0', lat:42.310, lng:69.631, open:H(10), close:H(23), rating:4.7, count:151,
+  addr:{ru:'ул. Кунаева, 52', kz:'Қонаев көшесі, 52'},
+  masters:[{id:'g1',name:'Асхат',ru:'барбер',kz:'барбер',skills:['g1','g2']},
+           {id:'g2',name:'Мирас',ru:'барбер',kz:'барбер',skills:['g1','g2']}],
+  services:[{id:'g1',ru:'Мужская стрижка',kz:'Ерлер шаш қиюы',dur:45,price:4500},
+            {id:'g2',ru:'Королевское бритьё',kz:'Ұстарамен қыру',dur:45,price:4000}],
+  reviews:[{a:'Ержан',s:5,d:1,txt:'Лучший барбершоп в районе.'},
+           {a:'Даулет',s:4,d:10,txt:'Жақсы қиды, бірақ сәл қымбат.'}]},
+ {id:'aliya', name:'Кабинет косметолога Әлия', cats:['cosmo'], color:'#E5E0CF', lat:42.328, lng:69.606, open:H(10), close:H(19), rating:4.8, count:52,
+  addr:{ru:'ул. Казыбек би, 7', kz:'Қазыбек би көшесі, 7'},
+  masters:[{id:'k1',name:'Әлия',ru:'косметолог',kz:'косметолог',skills:['k1','k2']}],
+  services:[{id:'k1',ru:'Чистка лица',kz:'Бет тазалау',dur:60,price:9000},
+            {id:'k2',ru:'Уход за лицом',kz:'Бет күтімі',dur:45,price:7000}],
+  reviews:[{a:'Сәуле',s:5,d:6,txt:'Терім жақсарды, рахмет Әлияға!'},
+           {a:'Наталья',s:5,d:16,txt:'Очень внимательный специалист.'}]},
+];
+const OWNER = 'akzhol';
+
+/* ===================== helpers ===================== */
+const pad = n => String(n).padStart(2,'0');
+const hm = m => pad(Math.floor(m/60)) + ':' + pad(m%60);
+const keyOf = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseKey = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y,m-1,d); };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => Math.round(n).toLocaleString('ru-RU').replace(/ /g,' ') + ' ₸';
+const tr = o => o[st.lang] || o.ru;
+const sal = id => SALONS.find(s => s.id === id);
+const svcOf = (s, id) => s.services.find(x => x.id === id);
+const mOf = (s, id) => s.masters.find(x => x.id === id);
+const nowMin = () => { const n = new Date(); return n.getHours()*60 + n.getMinutes(); };
+function t(k, v){ let s = L[st.lang][k] ?? L.ru[k] ?? k; if (v) for (const x in v) s = s.split('{'+x+'}').join(v[x]); return s; }
+
+const today = new Date(); today.setHours(0,0,0,0);
+const TODAY = keyOf(today);
+const DAYS = Array.from({length:14}, (_,i) => { const d = new Date(today); d.setDate(d.getDate()+i); return d; });
+const shiftKey = n => { const d = new Date(today); d.setDate(d.getDate()+n); return keyOf(d); };
+
+function dayShort(d){ const k = keyOf(d); return k===TODAY ? t('today') : k===shiftKey(1) ? t('tomorrow') : WD[st.lang][d.getDay()]; }
+function longDate(k){
+  const d = parseKey(k);
+  const head = k===TODAY ? t('today') : k===shiftKey(1) ? t('tomorrow') : WD[st.lang][d.getDay()];
+  return head + ', ' + d.getDate() + ' ' + MON[st.lang][d.getMonth()];
+}
+function revWord(n){
+  if (st.lang==='kz') return n + ' пікір';
+  const a = n%10, b = n%100;
+  return n + ' ' + (a===1&&b!==11 ? 'отзыв' : a>=2&&a<=4&&(b<10||b>=20) ? 'отзыва' : 'отзывов');
+}
+function fromPrice(s){ const p = Math.min(...s.services.map(x => x.price)); return st.lang==='kz' ? money(p)+'-ден' : 'от '+money(p); }
+function openText(s){
+  const n = nowMin();
+  if (n >= s.open && n < s.close) return `<span class="open">${st.lang==='kz' ? hm(s.close)+'-ге дейін ашық' : 'Открыто до '+hm(s.close)}</span>`;
+  return `<span class="closed">${st.lang==='kz' ? 'Жабық, '+hm(s.open)+'-де ашылады' : 'Закрыто, откроется в '+hm(s.open)}</span>`;
+}
+function distKm(a, b){
+  const R = 6371, toR = x => x*Math.PI/180;
+  const dLat = toR(b.lat-a.lat), dLng = toR(b.lng-a.lng);
+  const h = Math.sin(dLat/2)**2 + Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+const fmtDist = km => km < 1 ? Math.max(100, Math.round(km*10)*100) + ' м' : (Math.round(km*10)/10).toString().replace('.',',') + ' км';
+const initials = name => name.replace(/[^A-Za-zА-Яа-яӘәҒғҚқҢңӨөҰұҮүҺһІіЁё ]/g,'').split(' ').filter(Boolean).slice(-1)[0]?.[0] || name[0];
+const starsTxt = n => '★'.repeat(n) + '☆'.repeat(5-n);
+function daysAgo(d){
+  if (st.lang==='kz') return d===0 ? 'бүгін' : d===1 ? 'кеше' : d+' күн бұрын';
+  if (d===0) return 'сегодня'; if (d===1) return 'вчера';
+  const a = d%10, b = d%100;
+  return d + ' ' + (a===1&&b!==11 ? 'день' : a>=2&&a<=4&&(b<10||b>=20) ? 'дня' : 'дней') + ' назад';
+}
+const PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
+
+/* ===================== bookings ===================== */
+let uid = 1;
+const bookings = [];
+const addB = o => { const b = Object.assign({id:uid++, status:'active', wa:true, mine:false, isNew:false, reviewed:false}, o); bookings.push(b); return b; };
+(function seed(){
+  const s = sal(OWNER);
+  const names = ['Айжан','Мадина','Ольга','Жанна','Алия','Катя','Сания','Дана','Асель','Мария','Гульмира','Ирина','Аружан','Томирис'];
+  const phone = i => '+7 70'+(i%9+1)+' '+(300+i*37%600)+' '+pad(10+i*13%89)+' '+pad(10+i*29%89);
+  let r = 11; const rnd = () => (r = (r*9301+49297)%233280)/233280;
+  let i = 0;
+  for (let back = 6; back >= 1; back--){
+    const k = shiftKey(-back);
+    s.masters.forEach(m => {
+      let tm = s.open + (rnd()<.5 ? 0 : 60);
+      while (tm < s.close - 60){
+        if (rnd() < .62){
+          const sv = svcOf(s, m.skills[Math.floor(rnd()*m.skills.length)]);
+          if (tm + sv.dur > s.close) break;
+          addB({salon:OWNER, master:m.id, svc:sv.id, date:k, start:tm, dur:sv.dur, name:names[i%names.length], phone:phone(i), status: rnd()<.08 ? 'cancelled' : 'active'});
+          i++; tm += sv.dur;
+        }
+        tm += 30;
+      }
+    });
+  }
+  const up = [[0,'a1','n2',H(11)],[0,'a2','n1',H(12)],[0,'a1','n3',H(15)],[0,'a3','b1',H(16)],[0,'a2','n2',H(17)+30],
+              [1,'a1','n1',H(10)],[1,'a3','b2',H(13)],[1,'a2','n2',H(14)],[1,'a1','n2',H(17)],[2,'a2','n1',H(12)],[3,'a1','n3',H(11)]];
+  up.forEach(([d,m,sv,st0]) => { addB({salon:OWNER, master:m, svc:sv, date:shiftKey(d), start:st0, dur:svcOf(s,sv).dur, name:names[i%names.length], phone:phone(i), wa: i%4!==0}); i++; });
+  addB({salon:'aiym', master:'y1', svc:'l2', date:shiftKey(-1), start:H(18), dur:60, name:'Айжан', phone:'+7 701 555 12 34', mine:true});
+  addB({salon:OWNER, master:'a1', svc:'n2', date:shiftKey(2), start:H(15), dur:90, name:'Айжан', phone:'+7 701 555 12 34', mine:true});
+})();
+const isPast = b => { const n = new Date(); const d = parseKey(b.date); d.setMinutes(b.start + b.dur); return d < n; };
+
+function slotsFor(s, svcId, masterId, k, exclude){
+  const sv = svcOf(s, svcId);
+  const ms = masterId === 'any' ? s.masters.filter(m => m.skills.includes(svcId)) : [mOf(s, masterId)];
+  const out = [];
+  const isToday = k === TODAY, n = nowMin();
+  for (let tm = s.open; tm + sv.dur <= s.close; tm += 30){
+    if (isToday && tm <= n + 30) continue;
+    const m = ms.find(m => !bookings.some(b => b.id !== exclude && b.status==='active' && b.salon===s.id && b.master===m.id && b.date===k && tm < b.start+b.dur && b.start < tm+sv.dur));
+    if (m) out.push({t:tm, m:m.id});
+  }
+  return out;
+}
+
+/* ===================== state ===================== */
+let savedLang = 'kz';
+try { savedLang = localStorage.getItem('zh-lang') || 'kz'; } catch(_) {}
+const st = {
+  lang: savedLang, mode:'client', view:'home', cat:'all', q:'',
+  loc:{lat:DISTRICTS[0].lat, lng:DISTRICTS[0].lng, d:'alf', gps:false}, locMsg:'', locBusy:false,
+  salon:null, stab:'services',
+  flow:null, form:{name:'Айжан', phone:'+7 701 555 12 34', wa:true}, err:'', last:null,
+  confirmId:null, revFor:null, revStars:0, revText:'',
+  o:{tab:'book', day:TODAY, m:'all', drafts:{}, nsName:'', nsDur:'60', nsPrice:'', nmName:'', nmSpec:''}, unseen:0,
+};
+
+/* ===================== client views ===================== */
+function clientNav(){
+  const myCount = bookings.filter(b => b.mine && b.status==='active' && !isPast(b)).length;
+  return `<div class="tabs">
+    <button data-a="go" data-v="home" aria-pressed="${st.view!=='my'}">${t('home')}</button>
+    <button data-a="go" data-v="my" aria-pressed="${st.view==='my'}">${t('my')}${myCount?` (${myCount})`:''}</button>
+  </div>`;
+}
+function viewHome(){
+  const dName = st.loc.gps ? t('gps') : tr(DISTRICTS.find(x => x.id===st.loc.d));
+  return `${clientNav()}
+  <div class="card loc">
+    <div class="where"><div class="pin">${PIN}</div><div><div class="small muted">${t('you')}</div><b>${esc(dName)}</b></div></div>
+    <div class="row">
+      <select id="f-district" data-f="district" aria-label="District">${DISTRICTS.map(x => `<option value="${x.id}" ${!st.loc.gps&&st.loc.d===x.id?'selected':''}>${tr(x)}</option>`).join('')}</select>
+      <button class="btn2" data-a="gps" ${st.locBusy?'disabled':''}>${st.locBusy?t('detecting'):t('detect')}</button>
+    </div>
+    ${st.locMsg ? `<p class="err" style="color:var(--muted)">${st.locMsg}</p>` : ''}
+  </div>
+  <div class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="f-q" type="text" data-f="q" value="${esc(st.q)}" placeholder="${t('searchPh')}" aria-label="${t('searchPh')}"></div>
+  <div class="chips" role="group">
+    <button data-a="cat" data-v="all" aria-pressed="${st.cat==='all'}">${t('all')}</button>
+    ${CATS.map(c => `<button data-a="cat" data-v="${c.id}" aria-pressed="${st.cat===c.id}">${tr(c)}</button>`).join('')}
+  </div>
+  <h2>${t('nearby')}</h2>
+  <div class="list" id="list">${listHTML()}</div>
+  <p class="note">${t('demo')}</p>`;
+}
+function listHTML(){
+  const q = st.q.trim().toLowerCase();
+  const res = SALONS.filter(s => st.cat==='all' || s.cats.includes(st.cat))
+    .filter(s => !q || s.name.toLowerCase().includes(q) || s.services.some(x => x.ru.toLowerCase().includes(q) || x.kz.toLowerCase().includes(q)) || s.cats.some(c => { const cc = CATS.find(z=>z.id===c); return cc.ru.toLowerCase().includes(q)||cc.kz.toLowerCase().includes(q); }))
+    .map(s => ({s, km:distKm(st.loc, s)})).sort((a,b) => a.km - b.km);
+  if (!res.length) return `<div class="empty">${t('nothing')}</div>`;
+  return res.map(({s,km}) => `<button class="salon" data-a="open" data-v="${s.id}">
+      <div class="ava" style="background:${s.color};color:#14202B">${initials(s.name)}</div>
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+        <div class="row between"><span class="nm">${esc(s.name)}</span><span class="dist">${fmtDist(km)}</span></div>
+        <div class="meta"><span class="star">★ ${s.rating.toFixed(1).replace('.',',')}</span><span>${revWord(s.count)}</span><span>${s.cats.map(c => tr(CATS.find(z=>z.id===c))).join(' · ')}</span></div>
+        <div class="meta"><span>${openText(s)}</span><span>${fromPrice(s)}</span></div>
+        <div class="meta"><span>${tr(s.addr)}</span></div>
+      </div></button>`).join('');
+}
+function reviewHTML(r, ownerMode){
+  const draft = st.o.drafts[r.key] ?? '';
+  return `<div class="rev">
+    <div class="row between"><b>${esc(r.a)}</b><span class="small muted">${daysAgo(r.d)}</span></div>
+    <div class="row"><span class="stars">${starsTxt(r.s)}</span><span class="ver">✓ ${t('verified')}</span></div>
+    <div>${esc(r.txt)}</div>
+    ${r.reply ? `<div class="reply"><b>${t('reply')}</b>${esc(r.reply)}</div>` : ''}
+    ${ownerMode && !r.reply ? `<span class="pill" style="align-self:flex-start">${t('waitReply')}</span>
+      <textarea id="f-rep-${r.key}" data-f="draft" data-k="${r.key}" placeholder="${t('replyPh')}">${esc(draft)}</textarea>
+      <button class="mini acc" style="align-self:flex-start" data-a="reply" data-v="${r.key}">${t('replyBtn')}</button>` : ''}
+  </div>`;
+}
+function viewSalon(){
+  const s = sal(st.salon), km = distKm(st.loc, s);
+  let body = '';
+  if (st.stab==='services') body = s.services.map(x => `<div class="svc"><div><div>${esc(tr(x))}</div><div class="small muted">${x.dur} ${t('min')}</div></div>
+      <div class="row"><span class="p">${money(x.price)}</span><button class="mini acc" data-a="startBook" data-v="${x.id}">${t('book')}</button></div></div>`).join('');
+  else if (st.stab==='masters') body = s.masters.map(m => `<div class="svc"><div class="row"><div class="mav" style="background:${s.color};color:#14202B">${m.name[0]}</div><div><div>${esc(m.name)}</div><div class="small muted">${esc(tr(m))}</div></div></div></div>`).join('');
+  else body = `<div class="row"><span class="star" style="font-size:22px">★ ${s.rating.toFixed(1).replace('.',',')}</span><span class="muted">${revWord(s.count)}</span></div>
+      <p class="small muted" style="margin:0">${t('onlyAfter')}</p>` + s.reviews.map(r => reviewHTML(r,false)).join('');
+  return `<div class="narrow">
+    <button class="back" data-a="go" data-v="home">← ${t('back')}</button>
+    <div class="card">
+      <div class="row"><div class="ava" style="background:${s.color};color:#14202B">${initials(s.name)}</div>
+        <div style="min-width:0"><h2>${esc(s.name)}</h2><div class="meta"><span class="star">★ ${s.rating.toFixed(1).replace('.',',')}</span><span>${revWord(s.count)}</span></div></div></div>
+      <div class="meta"><span class="dist">${fmtDist(km)}</span><span>${tr(s.addr)}</span></div>
+      <div class="meta"><span>${openText(s)}</span><span>${hm(s.open)}–${hm(s.close)}</span></div>
+      <button class="btn" data-a="startBook" data-v="">${t('book')}</button>
+    </div>
+    <div class="tabs">
+      ${['services','masters','reviews'].map(k => `<button data-a="stab" data-v="${k}" aria-pressed="${st.stab===k}">${t(k)}${k==='reviews'?` (${s.count})`:''}</button>`).join('')}
+    </div>
+    <div class="card" style="gap:0">${body}</div>
+  </div>`;
+}
+function dayStrip(sel, act){
+  return `<div class="days" role="group">${DAYS.map(d => { const k = keyOf(d);
+    return `<button data-a="${act}" data-v="${k}" aria-pressed="${k===sel}"><small>${dayShort(d)}</small><b>${d.getDate()}</b></button>`; }).join('')}</div>`;
+}
+function viewBook(){
+  const f = st.flow, s = sal(f.salon), sv = f.svc && svcOf(s, f.svc);
+  const head = `<button class="back" data-a="fback">← ${t('back')}</button>
+    <div class="row between"><b>${esc(s.name)}</b><span class="small muted">${f.move ? '' : t('step',{n:f.step})}</span></div>`;
+  let body = '';
+  if (f.step===1){
+    body = `<h2>${t('s1')}</h2><div class="pick">${s.services.map(x => `<button data-a="fsvc" data-v="${x.id}">
+      <span><span style="font-weight:500">${esc(tr(x))}</span><br><span class="small muted">${x.dur} ${t('min')}</span></span><b>${money(x.price)}</b></button>`).join('')}</div>`;
+  } else if (f.step===2){
+    const ms = s.masters.filter(m => m.skills.includes(f.svc));
+    body = `<h2>${t('s2')}</h2><p class="muted small" style="margin:0">${esc(tr(sv))} · ${sv.dur} ${t('min')}</p>
+      <div class="pick">
+        <button data-a="fmaster" data-v="any"><span class="row"><span class="mav" style="background:var(--accent-soft);color:var(--accent)">✦</span><span><span style="font-weight:500">${t('any')}</span><br><span class="small muted">${t('anySub')}</span></span></span></button>
+        ${ms.map(m => `<button data-a="fmaster" data-v="${m.id}"><span class="row"><span class="mav" style="background:${s.color};color:#14202B">${m.name[0]}</span><span><span style="font-weight:500">${esc(m.name)}</span><br><span class="small muted">${esc(tr(m))}</span></span></span></button>`).join('')}
+      </div>`;
+  } else if (f.step===3){
+    const sl = slotsFor(s, f.svc, f.master, f.date, f.move);
+    body = `<h2>${f.move ? t('newTime') : t('s3')}</h2>
+      <p class="muted small" style="margin:0">${esc(tr(sv))} · ${f.master==='any' ? t('any') : esc(mOf(s,f.master).name)}</p>
+      ${dayStrip(f.date,'fday')}
+      ${sl.length ? `<div class="slots">${sl.map(x => `<button data-a="fslot" data-v="${x.t}" data-m="${x.m}" aria-pressed="${f.t===x.t}">${hm(x.t)}</button>`).join('')}</div>` : `<div class="empty">${t('noSlots')}</div>`}
+      ${st.err ? `<p class="err">${st.err}</p>` : ''}
+      <button class="btn" data-a="${f.move?'fmove':'fnext'}" ${f.t==null?'disabled':''}>${f.move ? t('saveMove') : t('next')}</button>`;
+  } else if (f.step===4){
+    const mName = mOf(s, f.assigned).name;
+    body = `<h2>${t('s4')}</h2>
+      <dl class="sum"><dt>${t('service')}</dt><dd>${esc(tr(sv))}</dd><dt>${t('master')}</dt><dd>${esc(mName)}</dd>
+        <dt>${t('when')}</dt><dd>${longDate(f.date)}, ${hm(f.t)}</dd><dt>${t('price')}</dt><dd>${money(sv.price)}</dd></dl>
+      <p class="small muted" style="margin:0">${t('noReg')}</p>
+      <form id="bookForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
+        <div class="field"><label for="f-name">${t('name')}</label><input id="f-name" type="text" data-f="name" value="${esc(st.form.name)}" autocomplete="name"></div>
+        <div class="field"><label for="f-phone">${t('phone')}</label><input id="f-phone" type="tel" data-f="phone" value="${esc(st.form.phone)}" inputmode="tel" autocomplete="tel"></div>
+        <label class="check"><input id="f-wa" type="checkbox" data-f="wa" ${st.form.wa?'checked':''}>${t('waOpt')}</label>
+        ${st.err ? `<p class="err">${st.err}</p>` : ''}
+        <button class="btn" type="submit">${t('confirm')}</button>
+      </form>`;
+  } else {
+    const b = st.last, bs = sal(b.salon), bsv = svcOf(bs, b.svc), bm = mOf(bs, b.master);
+    return `<div class="narrow"><div class="card">
+      <div class="ok">✓</div><h2>${t('done')}</h2>
+      <p style="margin:0">${t('doneText',{date:longDate(b.date), time:hm(b.start), salon:esc(bs.name)})}</p>
+      <dl class="sum"><dt>${t('service')}</dt><dd>${esc(tr(bsv))}</dd><dt>${t('master')}</dt><dd>${esc(bm.name)}</dd><dt>${t('price')}</dt><dd>${money(bsv.price)}</dd></dl>
+      ${b.wa ? `<div class="lbl">${t('waPrev')}</div><div class="wa"><small>WhatsApp · ${hm(Math.max(b.start-120,0))}</small>${esc(t('waMsg',{name:b.name, time:hm(b.start), salon:bs.name, service:tr(bsv).toLowerCase(), master:bm.name}))}</div>` : ''}
+      <button class="btn" data-a="go" data-v="my">${t('my')}</button>
+      <button class="btn2" data-a="go" data-v="home">${t('toHome')}</button>
+    </div></div>`;
+  }
+  return `<div class="narrow"><div class="card">${head}${body}</div></div>`;
+}
+function remindPill(b){
+  if (!b.wa) return `<span class="pill">${t('noRemind')}</span>`;
+  const d = parseKey(b.date); const at = new Date(d); at.setMinutes(b.start-120);
+  return new Date() >= at ? `<span class="pill ok">WhatsApp · ${t('remindSent')}</span>` : `<span class="pill">WhatsApp · ${t('remindAt',{t:hm(Math.max(b.start-120,0))})}</span>`;
+}
+function viewMy(){
+  const mine = bookings.filter(b => b.mine && b.status==='active');
+  const up = mine.filter(b => !isPast(b)).sort((a,b) => (a.date+hm(a.start)).localeCompare(b.date+hm(b.start)));
+  const past = mine.filter(isPast).sort((a,b) => (b.date+hm(b.start)).localeCompare(a.date+hm(a.start)));
+  const item = (b, isUp) => {
+    const s = sal(b.salon), sv = svcOf(s, b.svc), m = mOf(s, b.master);
+    let acts = '';
+    if (isUp){
+      acts = st.confirmId===b.id
+        ? `<span class="small">${t('cancelQ')}</span><div class="row"><button class="mini danger" data-a="cancelYes" data-v="${b.id}">${t('yes')}</button><button class="mini" data-a="cancelNo">${t('no')}</button></div>`
+        : `<div class="row"><button class="mini" data-a="move" data-v="${b.id}">${t('move')}</button><button class="mini danger" data-a="cancel" data-v="${b.id}">${t('cancel')}</button></div>`;
+    } else if (b.reviewed){
+      acts = `<span class="pill ok" style="align-self:flex-start">✓ ${t('reviewed')}</span>`;
+    } else if (st.revFor===b.id){
+      acts = `<div class="lbl">${t('leave')}</div>
+        <div class="rate" role="group">${[1,2,3,4,5].map(n => `<button data-a="star" data-v="${n}" aria-pressed="${n<=st.revStars}" aria-label="${n}">★</button>`).join('')}</div>
+        <textarea id="f-rev" data-f="revText" placeholder="${t('revPh')}">${esc(st.revText)}</textarea>
+        ${st.err ? `<p class="err">${st.err}</p>` : ''}
+        <div class="row"><button class="mini acc" data-a="sendRev" data-v="${b.id}">${t('send')}</button><button class="mini" data-a="revClose">${t('no')}</button></div>`;
+    } else {
+      acts = `<button class="mini acc" style="align-self:flex-start" data-a="revOpen" data-v="${b.id}">${t('leave')}</button>`;
+    }
+    return `<div class="card" style="gap:8px">
+      <div class="row between"><b>${esc(s.name)}</b><span class="small muted">${money(sv.price)}</span></div>
+      <div>${esc(tr(sv))} · ${esc(m.name)}</div>
+      <div class="small muted">${longDate(b.date)}, ${hm(b.start)} · ${tr(s.addr)}</div>
+      ${isUp ? remindPill(b) : ''}
+      ${acts}
+    </div>`;
+  };
+  return `${clientNav()}<div class="narrow">
+    <h2>${t('upcoming')}</h2>
+    ${up.length ? up.map(b => item(b,true)).join('') : `<div class="empty">${t('noMy')}</div>`}
+    <h2>${t('past')}</h2>
+    <p class="small muted" style="margin:0">${t('onlyAfter')}</p>
+    ${past.length ? past.map(b => item(b,false)).join('') : `<div class="empty">${t('noMy')}</div>`}
+  </div>`;
+}
+
+/* ===================== salon cabinet ===================== */
+function viewOwner(){
+  const s = sal(OWNER), o = st.o;
+  const tabs = `<div class="tabs">${[['book','tBook'],['rev','tRev'],['svc','tSvc'],['stat','tStat']].map(([k,l]) => {
+    const extra = k==='rev' ? s.reviews.filter(r => !r.reply).length : 0;
+    return `<button data-a="otab" data-v="${k}" aria-pressed="${o.tab===k}">${t(l)}${extra?`<span class="badge">${extra}</span>`:''}</button>`; }).join('')}</div>`;
+  let body = '';
+  if (o.tab==='book'){
+    const list = bookings.filter(b => b.salon===OWNER && b.status==='active' && b.date===o.day && (o.m==='all' || b.master===o.m)).sort((a,b) => a.start-b.start);
+    body = `<div class="card">
+      ${dayStrip(o.day,'oday')}
+      <div class="chips"><button data-a="om" data-v="all" aria-pressed="${o.m==='all'}">${t('allM')}</button>${s.masters.map(m => `<button data-a="om" data-v="${m.id}" aria-pressed="${o.m===m.id}">${esc(m.name)}</button>`).join('')}</div>
+      <div class="row between"><span class="lbl">${longDate(o.day)} · ${hm(s.open)}–${hm(s.close)}</span><span class="small muted">${t('newNote')}</span></div>
+      <div class="list">${list.length ? list.map(b => { const sv = svcOf(s,b.svc), m = mOf(s,b.master);
+        return `<div class="bk ${b.isNew?'new':''}"><div class="t">${hm(b.start)}<small>${hm(b.start+b.dur)}</small></div>
+          <div class="info"><div class="row between"><b>${esc(tr(sv))}</b><span>${money(sv.price)}</span></div>
+            <div class="small muted">${t('master')}: ${esc(m.name)} · ${t('client2')}: ${esc(b.name)}, ${esc(b.phone)}</div>
+            <div class="row">${b.isNew?`<span class="pill new">${t('newB')}</span>`:''}${isPast(b)?'':remindPill(b)}</div></div></div>`; }).join('') : `<div class="empty">${t('noBook')}</div>`}</div>
+    </div>`;
+  } else if (o.tab==='rev'){
+    body = `<div class="card" style="gap:0">
+      <div class="row" style="padding-bottom:12px"><span class="star" style="font-size:24px">★ ${s.rating.toFixed(1).replace('.',',')}</span><span class="muted">${revWord(s.count)}</span></div>
+      ${s.reviews.map(r => reviewHTML(r,true)).join('')}</div>`;
+  } else if (o.tab==='svc'){
+    const hoursOpts = (sel) => Array.from({length:17},(_,i)=>i+7).map(h => `<option value="${h}" ${H(h)===sel?'selected':''}>${pad(h)}:00</option>`).join('');
+    body = `<div class="grid2">
+      <div class="card"><h3>${t('services')}</h3>
+        <div class="tblwrap"><table class="tbl"><tbody>${s.services.map(x => `<tr><td>${esc(tr(x))}</td><td class="r muted">${x.dur} ${t('min')}</td><td class="r"><b>${money(x.price)}</b></td><td class="r"><button class="mini danger" data-a="delSvc" data-v="${x.id}">${t('del')}</button></td></tr>`).join('')}</tbody></table></div>
+        <div class="lbl">${t('addSvc')}</div>
+        <div class="formrow">
+          <div class="field wide"><label for="f-nsName">${t('svcName')}</label><input id="f-nsName" type="text" data-f="nsName" value="${esc(o.nsName)}"></div>
+          <div class="field"><label for="f-nsDur">${t('dur')}</label><select id="f-nsDur" data-f="nsDur">${[30,45,60,90,120].map(d => `<option ${String(d)===o.nsDur?'selected':''}>${d}</option>`).join('')}</select></div>
+          <div class="field"><label for="f-nsPrice">${t('priceT')}</label><input id="f-nsPrice" type="number" min="0" step="500" data-f="nsPrice" value="${esc(o.nsPrice)}"></div>
+          <button class="mini acc wide" style="height:44px" data-a="addSvc">${t('add')}</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div class="card"><h3>${t('masters')}</h3>
+          ${s.masters.map(m => `<div class="row"><div class="mav" style="background:${s.color};color:#14202B">${m.name[0]}</div><div><div>${esc(m.name)}</div><div class="small muted">${esc(tr(m))}</div></div></div>`).join('')}
+          <div class="lbl">${t('addM')}</div>
+          <div class="field"><label for="f-nmName">${t('mName')}</label><input id="f-nmName" type="text" data-f="nmName" value="${esc(o.nmName)}"></div>
+          <div class="field"><label for="f-nmSpec">${t('spec')}</label><input id="f-nmSpec" type="text" data-f="nmSpec" value="${esc(o.nmSpec)}"></div>
+          <button class="mini acc" style="align-self:flex-start" data-a="addM">${t('add')}</button>
+        </div>
+        <div class="card"><h3>${t('hours')}</h3>
+          <div class="row" style="flex-wrap:nowrap">
+            <div class="field" style="flex:1"><label for="f-open">${t('openT')}</label><select id="f-open">${hoursOpts(s.open)}</select></div>
+            <div class="field" style="flex:1"><label for="f-close">${t('closeT')}</label><select id="f-close">${hoursOpts(s.close)}</select></div>
+          </div>
+          <button class="mini acc" style="align-self:flex-start" data-a="saveHours">${t('save')}</button>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    const keys = Array.from({length:7},(_,i) => shiftKey(i-6));
+    const inWeek = bookings.filter(b => b.salon===OWNER && keys.includes(b.date));
+    const act = inWeek.filter(b => b.status==='active');
+    const rev = act.reduce((a,b) => a + svcOf(s,b.svc).price, 0);
+    const perDay = keys.map(k => act.filter(b => b.date===k).reduce((a,b) => a + svcOf(s,b.svc).price, 0));
+    const max = Math.max(...perDay, 1);
+    const short = v => v===0 ? '0' : (Math.round(v/100)/10).toString().replace('.',',') + (st.lang==='kz' ? ' мың' : ' тыс.');
+    const bySvc = s.services.map(x => ({x, n:act.filter(b => b.svc===x.id).length})).sort((a,b) => b.n-a.n);
+    const maxS = Math.max(...bySvc.map(z => z.n), 1);
+    const byM = s.masters.map(m => { const mine = act.filter(b => b.master===m.id); return {m, n:mine.length, r:mine.reduce((a,b)=>a+svcOf(s,b.svc).price,0)}; }).sort((a,b) => b.r-a.r);
+    const maxM = Math.max(...byM.map(z => z.r), 1);
+    body = `<div class="lbl">${t('week')}</div>
+      <div class="stats">
+        <div class="stat"><small>${t('sB')}</small><b>${act.length}</b></div>
+        <div class="stat"><small>${t('sR')}</small><b>${money(rev)}</b></div>
+        <div class="stat"><small>${t('sA')}</small><b>${money(act.length ? rev/act.length : 0)}</b></div>
+        <div class="stat"><small>${t('sC')}</small><b>${inWeek.length - act.length}</b></div>
+      </div>
+      <div class="card"><h3>${t('byDay')}</h3>
+        <div class="chart">${keys.map((k,i) => { const d = parseKey(k);
+          return `<div class="col ${k===TODAY?'today':''}"><span class="v">${short(perDay[i])}</span><div class="b" style="height:${(perDay[i]/max*120).toFixed(0)}px"></div><span class="d">${k===TODAY ? t('today') : WD[st.lang][d.getDay()]+' '+d.getDate()}</span></div>`; }).join('')}</div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>${t('top')}</h3>${bySvc.map(z => `<div class="hbar"><span>${esc(tr(z.x))}</span><span class="muted">${z.n} ${t('times')}</span><div class="track"><div class="fill" style="width:${(z.n/maxS*100).toFixed(0)}%"></div></div></div>`).join('')}</div>
+        <div class="card"><h3>${t('byM')}</h3>${byM.map(z => `<div class="hbar"><span>${esc(z.m.name)} · <span class="muted">${z.n}</span></span><b>${money(z.r)}</b><div class="track"><div class="fill" style="width:${(z.r/maxM*100).toFixed(0)}%"></div></div></div>`).join('')}</div>
+      </div>`;
+  }
+  return `<div class="row between"><h2>${t('cab')}: ${esc(s.name)}</h2></div>${tabs}${body}`;
+}
+
+/* ===================== render & events ===================== */
+const app = document.getElementById('app');
+function render(){
+  document.documentElement.lang = st.lang === 'kz' ? 'kk' : 'ru';
+  ['kz','ru'].forEach(l => document.getElementById('lang-'+l).setAttribute('aria-pressed', st.lang===l));
+  const mc = document.getElementById('mode-client'), ms = document.getElementById('mode-salon');
+  mc.textContent = t('client'); ms.textContent = t('salon');
+  if (st.unseen) ms.insertAdjacentHTML('beforeend', `<span class="badge">${st.unseen}</span>`);
+  mc.setAttribute('aria-pressed', st.mode==='client'); ms.setAttribute('aria-pressed', st.mode==='salon');
+  let html;
+  if (st.mode==='salon') html = viewOwner();
+  else if (st.view==='salon') html = viewSalon();
+  else if (st.view==='book') html = viewBook();
+  else if (st.view==='my') html = viewMy();
+  else html = `<div class="narrow">${viewHome()}</div>`;
+  app.innerHTML = st.view==='my' && st.mode==='client' ? `<div class="narrow">${html}</div>` : html;
+  const form = document.getElementById('bookForm');
+  if (form) form.addEventListener('submit', e => { e.preventDefault(); confirmBook(); });
+}
+let tt;
+function toast(msg){ const el = document.getElementById('toast'); el.textContent = msg; el.hidden = false; clearTimeout(tt); tt = setTimeout(() => el.hidden = true, 2600); }
+const top0 = () => window.scrollTo({top:0});
+
+function confirmBook(){
+  const f = st.flow, s = sal(f.salon), sv = svcOf(s, f.svc);
+  const name = st.form.name.trim(), digits = st.form.phone.replace(/\D/g,'');
+  if (!name){ st.err = t('errName'); return render(); }
+  if (digits.length < 10){ st.err = t('errPhone'); return render(); }
+  const still = slotsFor(s, f.svc, f.assigned, f.date).some(x => x.t === f.t);
+  if (!still){ st.err = t('errTaken'); f.step = 3; f.t = null; return render(); }
+  const b = addB({salon:s.id, master:f.assigned, svc:f.svc, date:f.date, start:f.t, dur:sv.dur, name, phone:st.form.phone.trim(), wa:st.form.wa, mine:true, isNew:true});
+  st.last = b; st.err = ''; f.step = 5;
+  if (s.id === OWNER){ st.unseen++; st.o.day = f.date; }
+  render(); top0();
+}
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  const a = el.dataset.a, v = el.dataset.v;
+  const f = st.flow;
+  switch(a){
+    case 'lang': st.lang = v; try { localStorage.setItem('zh-lang', v); } catch(_) {} break;
+    case 'mode':
+      st.mode = v;
+      if (v==='salon'){ if (st.unseen) toast(st.lang==='kz' ? 'Жаңа жазылу келді' : 'У вас новая запись'); st.unseen = 0; }
+      else bookings.forEach(b => b.isNew = false);
+      top0(); break;
+    case 'go': st.view = v; st.err = ''; st.confirmId = null; st.revFor = null; top0(); break;
+    case 'cat': st.cat = v; break;
+    case 'open': st.salon = v; st.stab = 'services'; st.view = 'salon'; top0(); break;
+    case 'stab': st.stab = v; break;
+    case 'gps': return detect();
+    case 'startBook':
+      st.flow = {salon:st.salon, svc:v || null, master:null, assigned:null, date:TODAY, t:null, step: v ? 2 : 1, fromSvc: !!v};
+      st.err = ''; st.view = 'book'; top0(); break;
+    case 'fback':
+      st.err = '';
+      if (f.move || f.step===5){ st.view = 'my'; st.flow = null; }
+      else if (f.step===1 || (f.step===2 && f.fromSvc)) { st.view = 'salon'; }
+      else f.step--;
+      break;
+    case 'fsvc': f.svc = v; f.step = 2; break;
+    case 'fmaster': f.master = v; f.t = null; f.step = 3; firstDayWithSlots(); break;
+    case 'fday': f.date = v; f.t = null; st.err = ''; break;
+    case 'fslot': f.t = +v; f.assigned = el.dataset.m; st.err = ''; break;
+    case 'fnext': if (f.t != null){ f.step = 4; st.err = ''; } break;
+    case 'fmove': {
+      const b = bookings.find(x => x.id === f.move);
+      b.date = f.date; b.start = f.t; b.master = f.assigned;
+      st.flow = null; st.view = 'my'; toast(t('moved')); break; }
+    case 'move': {
+      const b = bookings.find(x => x.id === +v);
+      st.flow = {salon:b.salon, svc:b.svc, master:b.master, assigned:b.master, date:b.date, t:null, step:3, move:b.id};
+      st.view = 'book'; st.err = ''; top0(); break; }
+    case 'cancel': st.confirmId = +v; break;
+    case 'cancelNo': st.confirmId = null; break;
+    case 'cancelYes': { const b = bookings.find(x => x.id === +v); b.status = 'cancelled'; st.confirmId = null; toast(t('cancelled')); break; }
+    case 'revOpen': st.revFor = +v; st.revStars = 0; st.revText = ''; st.err = ''; break;
+    case 'revClose': st.revFor = null; st.err = ''; break;
+    case 'star': st.revStars = +v; st.err = ''; break;
+    case 'sendRev': {
+      if (!st.revStars){ st.err = t('errStars'); break; }
+      const b = bookings.find(x => x.id === +v), s = sal(b.salon);
+      s.reviews.unshift({a:b.name, s:st.revStars, d:0, txt:st.revText.trim() || '—', key:s.id+':n'+(uid++)});
+      s.rating = Math.round(((s.rating*s.count + st.revStars)/(s.count+1))*10)/10; s.count++;
+      b.reviewed = true; st.revFor = null; st.err = ''; toast(t('thanks')); break; }
+    case 'otab': st.o.tab = v; break;
+    case 'oday': st.o.day = v; break;
+    case 'om': st.o.m = v; break;
+    case 'reply': {
+      const r = sal(v.split(':')[0]).reviews.find(x => x.key === v); if (!r) return;
+      const txt = (st.o.drafts[v] || '').trim(); if (!txt) return;
+      r.reply = txt; delete st.o.drafts[v]; toast(t('replied')); break; }
+    case 'delSvc': { const s = sal(OWNER); s.services = s.services.filter(x => x.id !== v); break; }
+    case 'addSvc': {
+      const o = st.o, price = parseInt(o.nsPrice, 10);
+      if (!o.nsName.trim() || !(price > 0)) { toast(t('svcErr')); return; }
+      const s = sal(OWNER), id = 'x'+uid++;
+      s.services.push({id, ru:o.nsName.trim(), kz:o.nsName.trim(), dur:+o.nsDur, price});
+      s.masters.forEach(m => m.skills.push(id));
+      o.nsName = ''; o.nsPrice = ''; toast(t('added')); break; }
+    case 'addM': {
+      const o = st.o; if (!o.nmName.trim()) { toast(t('mErr')); return; }
+      const s = sal(OWNER);
+      s.masters.push({id:'m'+uid++, name:o.nmName.trim(), ru:o.nmSpec.trim()||'—', kz:o.nmSpec.trim()||'—', skills:s.services.map(x => x.id)});
+      o.nmName = ''; o.nmSpec = ''; toast(t('added')); break; }
+    case 'saveHours': {
+      const s = sal(OWNER), op = +document.getElementById('f-open').value, cl = +document.getElementById('f-close').value;
+      if (cl > op){ s.open = H(op); s.close = H(cl); toast(t('saved')); }
+      break; }
+    default: return;
+  }
+  render();
+});
+function firstDayWithSlots(){
+  const f = st.flow, s = sal(f.salon);
+  for (const d of DAYS){ const k = keyOf(d); if (slotsFor(s, f.svc, f.master, k).length){ f.date = k; return; } }
+}
+
+document.addEventListener('input', e => {
+  const el = e.target, k = el.dataset.f; if (!k) return;
+  if (k==='q'){ st.q = el.value; document.getElementById('list').innerHTML = listHTML(); }
+  else if (k==='name' || k==='phone') st.form[k] = el.value;
+  else if (k==='revText') st.revText = el.value;
+  else if (k==='draft') st.o.drafts[el.dataset.k] = el.value;
+  else if (k in st.o) st.o[k] = el.value;
+});
+document.addEventListener('change', e => {
+  const el = e.target, k = el.dataset.f; if (!k) return;
+  if (k==='wa') st.form.wa = el.checked;
+  else if (k==='district'){ const d = DISTRICTS.find(x => x.id===el.value); st.loc = {lat:d.lat, lng:d.lng, d:d.id, gps:false}; st.locMsg = ''; render(); }
+  else if (k==='nsDur') st.o.nsDur = el.value;
+});
+
+function detect(){
+  const fail = () => { st.locBusy = false; st.locMsg = t('locFail'); render(); };
+  if (!('geolocation' in navigator)) return fail();
+  st.locBusy = true; st.locMsg = ''; render();
+  let done = false;
+  const timer = setTimeout(() => { if (!done){ done = true; fail(); } }, 6000);
+  try {
+    navigator.geolocation.getCurrentPosition(p => {
+      if (done) return; done = true; clearTimeout(timer);
+      const here = {lat:p.coords.latitude, lng:p.coords.longitude};
+      st.locBusy = false;
+      if (distKm(here, DISTRICTS[0]) > 30){ st.loc = {lat:DISTRICTS[0].lat, lng:DISTRICTS[0].lng, d:'alf', gps:false}; st.locMsg = t('far'); }
+      else st.loc = {lat:here.lat, lng:here.lng, d:null, gps:true};
+      render();
+    }, () => { if (!done){ done = true; clearTimeout(timer); fail(); } }, {timeout:5000, maximumAge:60000});
+  } catch(_) { if (!done){ done = true; clearTimeout(timer); fail(); } }
+}
+
+/* give every review a stable key for owner replies */
+SALONS.forEach(s => s.reviews.forEach((r,i) => r.key = s.id+':'+i));
+render();
+</script>
